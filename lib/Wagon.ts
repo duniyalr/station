@@ -8,9 +8,9 @@ export type WagonOpts = {
 };
 
 export enum WagonStatus {
-  IDLE,
-  WORKING,
-  COMPLETE,
+  IDLE = "idle",
+  WORKING = "working",
+  COMPLETE = "working",
 }
 
 export class WagonResponse {
@@ -46,6 +46,7 @@ export class Wagon {
 
   run = async (): Promise<WagonResponse> => {
     const response = await this.fn(this.args);
+    this.status = WagonStatus.COMPLETE;
     return new WagonResponse(response, this.payload);
   };
 }

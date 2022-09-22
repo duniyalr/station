@@ -8,15 +8,22 @@ publicLine.addListener({
     console.log(msg);
   },
 });
-publicLine.after({
-  fetcher: () => {
-    console.log("fetcher");
-    return { msg: "this is my response" };
-  },
-  payload: {},
-});
+publicLine
+  .after({
+    fetcher: () => {
+      return { msg: "this is my response" };
+    },
+    payload: {},
+  })
+  .after({
+    fetcher: () => {
+      return { msg: "this is second request" };
+    },
+  });
 publicLine.addListener({
   listener: () => {
     console.log("From listener 1");
   },
 });
+
+console.log(publicLine);

@@ -10,9 +10,9 @@ export type TrainOpts = {
 };
 export type CreateWagonOpts = WagonOpts;
 export enum TrainStatus {
-  IDLE,
-  WORKING,
-  COMPLETE,
+  IDLE = "idle",
+  WORKING = "working",
+  COMPLETE = "complete",
 }
 
 export type TrainResponse = any;
@@ -38,6 +38,10 @@ export class Train {
     this.wagons.push(wagon);
   };
 
+  removeFirstWagon = (): Wagon | undefined => {
+    return this.wagons.shift();
+  };
+
   run = async () => {
     const wagons = this.wagons;
 
@@ -47,6 +51,8 @@ export class Train {
       const wagon = wagons[0];
       try {
         const wagonResponse = await wagon.run();
+        console.log(wagonResponse);
+        this.removeFirstWagon();
         return this.complete(wagonResponse);
       } catch (err) {
         return this.error(err as Error);

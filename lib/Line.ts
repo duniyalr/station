@@ -4,9 +4,9 @@ import { CreateWagonOpts, Train, TrainResponse, TrainStatus } from "./Train";
 
 export enum LineMode {
   // in auto mode sending request will done automatically when inserted
-  AUTO,
+  AUTO = "auto",
   // in manual mode user should explicitly runs the request
-  MANUAL,
+  MANUAL = "manual",
 }
 
 export type LineOpts = {
@@ -15,9 +15,9 @@ export type LineOpts = {
 };
 
 export enum LineStatus {
-  EMPTY,
-  PAUSE,
-  WORKING,
+  EMPTY = "empty",
+  PAUSE = "pause",
+  WORKING = "working",
 }
 
 export type AfterOpts = CreateWagonOpts;
@@ -47,6 +47,14 @@ export class Line {
 
   getLastTrain = (): Train => {
     return this.trains[this.trains.length - 1];
+  };
+
+  setWorkingTrain = (train: Train) => {
+    this.workingTrain = train;
+  };
+
+  setNextWorkingTrain = () => {
+    this.setWorkingTrain(this.trains[this.trains.length - 1]);
   };
 
   after = (opts: AfterOpts): Line => {
@@ -89,13 +97,24 @@ export class Line {
     this.station.observer.addListener(this.name, listenerOpts);
   }
 
+  checkWorkingTrain = () => {
+    if (!this.workingTrain) return (this.status = LineStatus.EMPTY);
+    if (this.workingTrain?.status === TrainStatus.IDLE)
+      return (this.status = LineStatus.PAUSE);
+    return (this.status = LineStatus.WORKING);
+  };
+
   onTrainComplete = (trainResponse: TrainResponse) => {
     const observerMessage = new Message(
       this.name,
-      trainResponse,
+      trainResponse.response,
       trainResponse.payload
     );
     this.station.emitMessage(observerMessage);
+    this.trains.shift();
+    this.setNextWorkingTrain();
+    this.workingTrain?.run();
+    this.checkWorkingTrain();
   };
 
   onTrainError = (err: Error) => {};
