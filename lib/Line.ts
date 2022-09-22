@@ -1,3 +1,5 @@
+import { ListenerOpts, Message } from "./Observer";
+import { Station } from "./Station";
 import { CreateWagonOpts, Train, TrainResponse, TrainStatus } from "./Train";
 
 export enum LineMode {
@@ -8,6 +10,7 @@ export enum LineMode {
 }
 
 export type LineOpts = {
+  station: Station;
   mode?: LineMode;
 };
 
@@ -21,14 +24,15 @@ export type AfterOpts = CreateWagonOpts;
 export type WithOpts = CreateWagonOpts;
 
 export class Line {
+  station: Station;
   name: string;
   status: LineStatus = LineStatus.EMPTY;
   trains: Train[] = [];
-  workingTrain: Train;
-  constructor(name: string, opts?: LineOpts) {
+  workingTrain: Train | undefined;
+  constructor(name: string, opts: LineOpts) {
     this.name = name;
     opts = Object.assign({}, opts);
-
+    this.station = opts.station;
     if (!opts.mode) opts.mode = LineMode.AUTO;
   }
 
@@ -81,7 +85,18 @@ export class Line {
     this.workingTrain.run();
   };
 
-  onTrainComplete = (trainResponse: TrainResponse) => {};
+  addListener(listenerOpts: ListenerOpts) {
+    this.station.observer.addListener(this.name, listenerOpts);
+  }
+
+  onTrainComplete = (trainResponse: TrainResponse) => {
+    const observerMessage = new Message(
+      this.name,
+      trainResponse,
+      trainResponse.payload
+    );
+    this.station.emitMessage(observerMessage);
+  };
 
   onTrainError = (err: Error) => {};
 }

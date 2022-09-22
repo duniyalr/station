@@ -1,6 +1,10 @@
 export type WagonOpts = {
-  fn: any;
+  fetcher: any;
+  payload?: any;
+  rollback?: any;
   args?: any[];
+  onComplete?: any;
+  onError?: any;
 };
 
 export enum WagonStatus {
@@ -9,18 +13,39 @@ export enum WagonStatus {
   COMPLETE,
 }
 
+export class WagonResponse {
+  response: any;
+  payload: any;
+  constructor(response: any, payload: any) {
+    this.response = response;
+    this.payload = payload;
+  }
+}
+
 export class Wagon {
   status: WagonStatus = WagonStatus.IDLE;
+  fetcher: any;
   fn: any;
+  payload: any;
   args: any[];
 
   constructor(opts: WagonOpts) {
-    this.fn = opts.fn;
+    this.fetcher = opts.fetcher;
+    this.fn = async (args: any[]) => {
+      let response = this.fetcher.apply(args);
+      if (response instanceof Promise) {
+        response = await response;
+      }
+
+      return response;
+    };
+    if (opts.payload) this.payload = opts.payload;
     if (opts.args) this.args = opts.args;
     else this.args = [];
   }
 
-  run = (): Promise<any> | any => {
-    return this.fn.apply(this.args);
+  run = async (): Promise<WagonResponse> => {
+    const response = await this.fn(this.args);
+    return new WagonResponse(response, this.payload);
   };
 }

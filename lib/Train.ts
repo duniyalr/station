@@ -1,7 +1,9 @@
 import { Line } from "./Line";
 import { Wagon, WagonOpts } from "./Wagon";
 
-export enum TrainMode {}
+export enum TrainMode {
+  DEFAULT,
+}
 
 export type TrainOpts = {
   mode?: TrainMode;
@@ -17,7 +19,7 @@ export type TrainResponse = any;
 
 export class Train {
   line: Line;
-  mode: TrainMode;
+  mode: TrainMode = TrainMode.DEFAULT;
   status: TrainStatus = TrainStatus.IDLE;
   wagons: Wagon[] = [];
 
@@ -44,13 +46,10 @@ export class Train {
       this.status = TrainStatus.WORKING;
       const wagon = wagons[0];
       try {
-        let wagonResponse = wagon.run();
-        if (wagonResponse instanceof Promise) {
-          wagonResponse = await wagonResponse;
-        }
+        const wagonResponse = await wagon.run();
         return this.complete(wagonResponse);
       } catch (err) {
-        return this.error(err);
+        return this.error(err as Error);
       }
     }
   };
