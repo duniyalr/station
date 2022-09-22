@@ -93,9 +93,15 @@ export class Line {
     this.workingTrain.run();
   };
 
-  addListener(listenerOpts: ListenerOpts) {
+  addListener = (listenerOpts: ListenerOpts) => {
     this.station.observer.addListener(this.name, listenerOpts);
-  }
+  };
+
+  removeListeneres = (scopeName?: string) => {
+    if (scopeName)
+      return this.station.observer.removeScopeListeners(this.name, scopeName);
+    return this.station.observer.removeListeners(this.name);
+  };
 
   checkWorkingTrain = () => {
     if (!this.workingTrain) return (this.status = LineStatus.EMPTY);

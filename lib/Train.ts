@@ -51,7 +51,6 @@ export class Train {
       const wagon = wagons[0];
       try {
         const wagonResponse = await wagon.run();
-        console.log(wagonResponse);
         this.removeFirstWagon();
         return this.complete(wagonResponse);
       } catch (err) {

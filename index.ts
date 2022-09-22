@@ -8,6 +8,7 @@ publicLine.addListener({
     console.log(msg);
   },
 });
+publicLine.removeListeneres();
 publicLine
   .after({
     fetcher: () => {
@@ -19,11 +20,45 @@ publicLine
     fetcher: () => {
       return { msg: "this is second request" };
     },
+    payload: { id: Symbol("fd") },
   });
-publicLine.addListener({
-  listener: () => {
-    console.log("From listener 1");
-  },
-});
+
+setInterval(() => {
+  publicLine.after({
+    fetcher: () => {
+      return { time: new Date() };
+    },
+  });
+}, 2000);
+
+setTimeout(() => {
+  publicLine.addListener({
+    listener: (msg: Message) => {
+      console.log("inner", msg);
+    },
+    scope: "inner",
+  });
+}, 5000);
+
+setTimeout(() => {
+  publicLine.addListener({
+    listener: (msg: Message) => {
+      console.log(msg);
+    },
+  });
+}, 1000);
+
+const privateLine = station.getOrCreateLine("PRIVATE");
+privateLine
+  .after({
+    fetcher: () => {
+      return { msg: "For private" };
+    },
+  })
+  .addListener({
+    listener: (msg: Message) => {
+      console.log("dddd", msg);
+    },
+  });
 
 console.log(publicLine);
