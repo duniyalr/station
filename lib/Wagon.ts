@@ -22,11 +22,22 @@ export class WagonResponse {
   }
 }
 
+export class WagonError {
+  error: any;
+  rollback: any;
+
+  constructor(error: any, rollback: any) {
+    this.error = error;
+    this.rollback = rollback;
+  }
+}
+
 export class Wagon {
   status: WagonStatus = WagonStatus.IDLE;
   fetcher: any;
   fn: any;
   payload: any;
+  rollback: any;
   args: any[];
 
   constructor(opts: WagonOpts) {
@@ -40,13 +51,20 @@ export class Wagon {
       return response;
     };
     if (opts.payload) this.payload = opts.payload;
+    // if rollback not provided payload will be used;
+    if (opts.rollback) this.rollback = opts.rollback;
+    else this.rollback = this.payload;
     if (opts.args) this.args = opts.args;
     else this.args = [];
   }
 
-  run = async (): Promise<WagonResponse> => {
-    const response = await this.fn(this.args);
-    this.status = WagonStatus.COMPLETE;
-    return new WagonResponse(response, this.payload);
+  run = async (): Promise<WagonResponse | WagonError> => {
+    try {
+      const response = await this.fn(this.args);
+      this.status = WagonStatus.COMPLETE;
+      return new WagonResponse(response, this.payload);
+    } catch (err) {
+      return new WagonError(err, this.rollback);
+    }
   };
 }

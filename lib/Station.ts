@@ -1,12 +1,14 @@
 import { Line, LineOpts } from "./Line";
-import { Message, Observer } from "./Observer";
+import { Message, MessageType, Observer } from "./Observer";
 
 export class Station {
   lines: Map<string, Line> = new Map();
   observer: Observer;
+  errorObserver: Observer;
 
   constructor() {
     this.observer = new Observer();
+    this.errorObserver = new Observer();
   }
 
   getLine = (lineName: string): Line | undefined => {
@@ -22,6 +24,7 @@ export class Station {
     const line = new Line(lineName, opts);
     this.lines.set(lineName, line);
     this.observer.createLineListener(lineName);
+    this.errorObserver.createLineListener(lineName);
     return line;
   };
 
@@ -32,6 +35,9 @@ export class Station {
   };
 
   emitMessage = (message: Message) => {
-    this.observer.onMessage(message);
+    if (message.type === MessageType.RESPONSE) {
+      return this.observer.onMessage(message);
+    }
+    return this.errorObserver.onMessage(message);
   };
 }

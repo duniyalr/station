@@ -1,6 +1,7 @@
 import { ListenerOpts, Message } from "./Observer";
 import { Station } from "./Station";
-import { CreateWagonOpts, Train, TrainResponse, TrainStatus } from "./Train";
+import { CreateWagonOpts, Train, TrainStatus } from "./Train";
+import { WagonError, WagonResponse } from "./Wagon";
 
 export enum LineMode {
   // in auto mode sending request will done automatically when inserted
@@ -97,6 +98,10 @@ export class Line {
     this.station.observer.addListener(this.name, listenerOpts);
   };
 
+  addErrorListener = (listenerOpts: ListenerOpts) => {
+    this.station.errorObserver.addListener(this.name, listenerOpts);
+  };
+
   removeListeners = (scopeName?: string) => {
     if (scopeName)
       return this.station.observer.removeScopeListeners(this.name, scopeName);
@@ -110,18 +115,16 @@ export class Line {
     return (this.status = LineStatus.WORKING);
   };
 
-  onTrainComplete = (trainResponse: TrainResponse) => {
-    const observerMessage = new Message(
-      this.name,
-      trainResponse.response,
-      trainResponse.payload
-    );
+  onTrainComplete = (wagonResponse: WagonResponse) => {};
+
+  onTrainError = (err: Error) => {};
+
+  onTrainResult = (wagonResult: WagonResponse | WagonError) => {
+    const observerMessage = new Message(this.name, wagonResult);
     this.station.emitMessage(observerMessage);
     this.trains.shift();
     this.setNextWorkingTrain();
     this.workingTrain?.run();
     this.checkWorkingTrain();
   };
-
-  onTrainError = (err: Error) => {};
 }

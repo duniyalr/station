@@ -1,3 +1,5 @@
+import { WagonError, WagonResponse } from "./Wagon";
+
 export const DEFAULT_SCOPE_NAME = "__default";
 export type Response = any;
 export type ListenerOpts = {
@@ -13,25 +15,41 @@ export class LineObserver {
   }
 }
 export type Listener = (response: Response) => void;
+export enum MessageType {
+  RESPONSE = "response",
+  ERROR = "error",
+}
 export class Message {
   name: string;
-  response: Response;
-  payload: any;
+  type: MessageType;
+  response: WagonResponse | WagonError;
 
-  constructor(name: string, response: Response, payload: any) {
+  constructor(name: string, response: WagonResponse | WagonError) {
     this.name = name;
     this.response = response;
-    this.payload = payload;
+    if (this.response instanceof WagonResponse)
+      this.type = MessageType.RESPONSE;
+    else this.type = MessageType.ERROR;
   }
 }
 
-export class ResponseData {
-  data: any;
-  payload: any;
+// export class ResponseData {
+//   data: any;
+//   payload: any;
 
-  constructor(data: any, payload: any) {
-    this.data = data;
-    this.payload = payload;
+//   constructor(data: any, payload: any) {
+//     this.data = data;
+//     this.payload = payload;
+//   }
+// }
+
+export class ResponseError {
+  error: any;
+  rollback: any;
+
+  constructor(error: any, rollback: any) {
+    this.error = error;
+    this.rollback = rollback;
   }
 }
 
@@ -93,7 +111,7 @@ export class Observer {
 
   onMessage = (message: Message) => {
     for (const listener of this.getLineListeners(message.name)) {
-      listener(new ResponseData(message.response, message.payload));
+      listener(message.response);
     }
   };
 }

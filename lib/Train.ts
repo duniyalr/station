@@ -1,5 +1,5 @@
 import { Line } from "./Line";
-import { Wagon, WagonOpts } from "./Wagon";
+import { Wagon, WagonError, WagonOpts, WagonResponse } from "./Wagon";
 
 export enum TrainMode {
   DEFAULT,
@@ -14,8 +14,6 @@ export enum TrainStatus {
   WORKING = "working",
   COMPLETE = "complete",
 }
-
-export type TrainResponse = any;
 
 export class Train {
   line: Line;
@@ -45,24 +43,19 @@ export class Train {
   run = async () => {
     const wagons = this.wagons;
 
-    if (wagons.length === 0) return this.complete();
+    if (wagons.length === 0) return;
     if (wagons.length === 1) {
       this.status = TrainStatus.WORKING;
       const wagon = wagons[0];
-      try {
-        const wagonResponse = await wagon.run();
-        this.removeFirstWagon();
-        return this.complete(wagonResponse);
-      } catch (err) {
-        return this.error(err as Error);
-      }
+      const wagonResult = await wagon.run();
+
+      this.removeFirstWagon();
+      return this.result(wagonResult);
     }
   };
 
-  complete = (trainResponse?: TrainResponse) => {
+  result = (wagonResult: WagonResponse | WagonError) => {
     this.status = TrainStatus.COMPLETE;
-    return this.line.onTrainComplete(trainResponse);
+    return this.line.onTrainResult(wagonResult);
   };
-
-  error = (err: Error) => {};
 }
