@@ -97,7 +97,7 @@ export class Line {
     this.station.observer.addListener(this.name, listenerOpts);
   };
 
-  removeListeneres = (scopeName?: string) => {
+  removeListeners = (scopeName?: string) => {
     if (scopeName)
       return this.station.observer.removeScopeListeners(this.name, scopeName);
     return this.station.observer.removeListeners(this.name);

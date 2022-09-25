@@ -25,6 +25,16 @@ export class Message {
   }
 }
 
+export class ResponseData {
+  data: any;
+  payload: any;
+
+  constructor(data: any, payload: any) {
+    this.data = data;
+    this.payload = payload;
+  }
+}
+
 export class Observer {
   listeners: Map<string, LineObserver> = new Map();
 
@@ -83,7 +93,7 @@ export class Observer {
 
   onMessage = (message: Message) => {
     for (const listener of this.getLineListeners(message.name)) {
-      listener(message.response);
+      listener(new ResponseData(message.response, message.payload));
     }
   };
 }
