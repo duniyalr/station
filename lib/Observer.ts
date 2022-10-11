@@ -22,6 +22,7 @@ export enum MessageType {
 export class Message {
   name: string;
   type: MessageType;
+  next: boolean = true;
   response: WagonResponse | WagonError;
 
   constructor(name: string, response: WagonResponse | WagonError) {
@@ -31,17 +32,12 @@ export class Message {
       this.type = MessageType.RESPONSE;
     else this.type = MessageType.ERROR;
   }
+
+  stopPropagation = () => {
+    console.log("stop propagation");
+    this.next = false;
+  };
 }
-
-// export class ResponseData {
-//   data: any;
-//   payload: any;
-
-//   constructor(data: any, payload: any) {
-//     this.data = data;
-//     this.payload = payload;
-//   }
-// }
 
 export class ResponseError {
   error: any;
@@ -96,7 +92,10 @@ export class Observer {
 
   removeListeners = (lineName: string) => {
     const listenersMap = this.listeners.get(lineName);
-    if (!listenersMap) throw new Error(`Listeners for ${lineName} not found`);
+    if (!listenersMap) {
+      // throw new Error(`Listeners for ${lineName} not found`);
+      return;
+    }
     this.listeners.delete(lineName);
     this.createLineListener(lineName);
   };
@@ -105,13 +104,19 @@ export class Observer {
     const listenersMap = this.listeners.get(lineName);
     if (!listenersMap) throw new Error(`Listeners for ${lineName} not found`);
     const scopeListeneres = listenersMap.listeners.get(scopeName);
-    if (!scopeListeneres) throw new Error(`Scope with ${scopeName} not found`);
+    if (!scopeListeneres) {
+      // throw new Error(`Scope with ${scopeName} not found`);
+      return;
+    }
     listenersMap.listeners.set(scopeName, []);
   };
 
   onMessage = (message: Message) => {
+    console.log("message comes", message);
     for (const listener of this.getLineListeners(message.name)) {
-      listener(message.response);
+      console.log(listener);
+      if (!message.next) return;
+      listener(message);
     }
   };
 }

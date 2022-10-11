@@ -1,5 +1,5 @@
 import { Line } from "./Line";
-import { Observer } from "./Observer";
+import { MessageType, Observer } from "./Observer";
 export class Station {
     constructor() {
         this.lines = new Map();
@@ -16,6 +16,7 @@ export class Station {
             const line = new Line(lineName, opts);
             this.lines.set(lineName, line);
             this.observer.createLineListener(lineName);
+            this.errorObserver.createLineListener(lineName);
             return line;
         };
         this.getOrCreateLine = (lineName) => {
@@ -25,8 +26,12 @@ export class Station {
             return this.createLine(lineName);
         };
         this.emitMessage = (message) => {
-            this.observer.onMessage(message);
+            if (message.type === MessageType.RESPONSE) {
+                return this.observer.onMessage(message);
+            }
+            return this.errorObserver.onMessage(message);
         };
         this.observer = new Observer();
+        this.errorObserver = new Observer();
     }
 }

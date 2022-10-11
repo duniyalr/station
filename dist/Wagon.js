@@ -19,13 +19,24 @@ export class WagonResponse {
         this.payload = payload;
     }
 }
+export class WagonError {
+    constructor(error, rollback) {
+        this.error = error;
+        this.rollback = rollback;
+    }
+}
 export class Wagon {
     constructor(opts) {
         this.status = WagonStatus.IDLE;
         this.run = () => __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.fn(this.args);
-            this.status = WagonStatus.COMPLETE;
-            return new WagonResponse(response, this.payload);
+            try {
+                const response = yield this.fn(this.args);
+                this.status = WagonStatus.COMPLETE;
+                return new WagonResponse(response, this.payload);
+            }
+            catch (err) {
+                return new WagonError(err, this.rollback);
+            }
         });
         this.fetcher = opts.fetcher;
         this.fn = (args) => __awaiter(this, void 0, void 0, function* () {
@@ -37,6 +48,11 @@ export class Wagon {
         });
         if (opts.payload)
             this.payload = opts.payload;
+        // if rollback not provided payload will be used;
+        if (opts.rollback)
+            this.rollback = opts.rollback;
+        else
+            this.rollback = this.payload;
         if (opts.args)
             this.args = opts.args;
         else

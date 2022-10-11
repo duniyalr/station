@@ -32,25 +32,19 @@ export class Train {
         this.run = () => __awaiter(this, void 0, void 0, function* () {
             const wagons = this.wagons;
             if (wagons.length === 0)
-                return this.complete();
+                return;
             if (wagons.length === 1) {
                 this.status = TrainStatus.WORKING;
                 const wagon = wagons[0];
-                try {
-                    const wagonResponse = yield wagon.run();
-                    this.removeFirstWagon();
-                    return this.complete(wagonResponse);
-                }
-                catch (err) {
-                    return this.error(err);
-                }
+                const wagonResult = yield wagon.run();
+                this.removeFirstWagon();
+                return this.result(wagonResult);
             }
         });
-        this.complete = (trainResponse) => {
+        this.result = (wagonResult) => {
             this.status = TrainStatus.COMPLETE;
-            return this.line.onTrainComplete(trainResponse);
+            return this.line.onTrainResult(wagonResult);
         };
-        this.error = (err) => { };
         this.line = line;
         opts = Object.assign({}, opts);
     }

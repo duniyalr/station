@@ -66,10 +66,15 @@ export class Line {
         this.addListener = (listenerOpts) => {
             this.station.observer.addListener(this.name, listenerOpts);
         };
+        this.addErrorListener = (listenerOpts) => {
+            this.station.errorObserver.addListener(this.name, listenerOpts);
+        };
         this.removeListeners = (scopeName) => {
             if (scopeName)
-                return this.station.observer.removeScopeListeners(this.name, scopeName);
-            return this.station.observer.removeListeners(this.name);
+                return (this.station.observer.removeScopeListeners(this.name, scopeName),
+                    this.station.errorObserver.removeScopeListeners(this.name, scopeName));
+            return (this.station.observer.removeListeners(this.name),
+                this.station.errorObserver.removeListeners(this.name));
         };
         this.checkWorkingTrain = () => {
             var _a;
@@ -79,16 +84,15 @@ export class Line {
                 return (this.status = LineStatus.PAUSE);
             return (this.status = LineStatus.WORKING);
         };
-        this.onTrainComplete = (trainResponse) => {
+        this.onTrainResult = (wagonResult) => {
             var _a;
-            const observerMessage = new Message(this.name, trainResponse.response, trainResponse.payload);
+            const observerMessage = new Message(this.name, wagonResult);
             this.station.emitMessage(observerMessage);
             this.trains.shift();
             this.setNextWorkingTrain();
             (_a = this.workingTrain) === null || _a === void 0 ? void 0 : _a.run();
             this.checkWorkingTrain();
         };
-        this.onTrainError = (err) => { };
         this.name = name;
         opts = Object.assign({}, opts);
         this.station = opts.station;

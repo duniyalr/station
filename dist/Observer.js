@@ -1,3 +1,4 @@
+import { WagonResponse } from "./Wagon";
 export const DEFAULT_SCOPE_NAME = "__default";
 export class LineObserver {
     constructor() {
@@ -5,17 +6,30 @@ export class LineObserver {
         this.listeners = new Map();
     }
 }
+export var MessageType;
+(function (MessageType) {
+    MessageType["RESPONSE"] = "response";
+    MessageType["ERROR"] = "error";
+})(MessageType || (MessageType = {}));
 export class Message {
-    constructor(name, response, payload) {
+    constructor(name, response) {
+        this.next = true;
+        this.stopPropagation = () => {
+            console.log("stop propagation");
+            this.next = false;
+        };
         this.name = name;
         this.response = response;
-        this.payload = payload;
+        if (this.response instanceof WagonResponse)
+            this.type = MessageType.RESPONSE;
+        else
+            this.type = MessageType.ERROR;
     }
 }
-export class ResponseData {
-    constructor(data, payload) {
-        this.data = data;
-        this.payload = payload;
+export class ResponseError {
+    constructor(error, rollback) {
+        this.error = error;
+        this.rollback = rollback;
     }
 }
 export class Observer {
@@ -41,8 +55,10 @@ export class Observer {
         };
         this.removeListeners = (lineName) => {
             const listenersMap = this.listeners.get(lineName);
-            if (!listenersMap)
-                throw new Error(`Listeners for ${lineName} not found`);
+            if (!listenersMap) {
+                // throw new Error(`Listeners for ${lineName} not found`);
+                return;
+            }
             this.listeners.delete(lineName);
             this.createLineListener(lineName);
         };
@@ -51,13 +67,19 @@ export class Observer {
             if (!listenersMap)
                 throw new Error(`Listeners for ${lineName} not found`);
             const scopeListeneres = listenersMap.listeners.get(scopeName);
-            if (!scopeListeneres)
-                throw new Error(`Scope with ${scopeName} not found`);
+            if (!scopeListeneres) {
+                // throw new Error(`Scope with ${scopeName} not found`);
+                return;
+            }
             listenersMap.listeners.set(scopeName, []);
         };
         this.onMessage = (message) => {
+            console.log("message comes", message);
             for (const listener of this.getLineListeners(message.name)) {
-                listener(new ResponseData(message.response, message.payload));
+                console.log(listener);
+                if (!message.next)
+                    return;
+                listener(message);
             }
         };
     }

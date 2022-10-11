@@ -104,8 +104,14 @@ export class Line {
 
   removeListeners = (scopeName?: string) => {
     if (scopeName)
-      return this.station.observer.removeScopeListeners(this.name, scopeName);
-    return this.station.observer.removeListeners(this.name);
+      return (
+        this.station.observer.removeScopeListeners(this.name, scopeName),
+        this.station.errorObserver.removeScopeListeners(this.name, scopeName)
+      );
+    return (
+      this.station.observer.removeListeners(this.name),
+      this.station.errorObserver.removeListeners(this.name)
+    );
   };
 
   checkWorkingTrain = () => {
@@ -114,10 +120,6 @@ export class Line {
       return (this.status = LineStatus.PAUSE);
     return (this.status = LineStatus.WORKING);
   };
-
-  onTrainComplete = (wagonResponse: WagonResponse) => {};
-
-  onTrainError = (err: Error) => {};
 
   onTrainResult = (wagonResult: WagonResponse | WagonError) => {
     const observerMessage = new Message(this.name, wagonResult);
